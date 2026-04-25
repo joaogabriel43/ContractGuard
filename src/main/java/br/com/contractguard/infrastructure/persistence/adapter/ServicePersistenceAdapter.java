@@ -6,8 +6,10 @@ import br.com.contractguard.infrastructure.persistence.entity.ServiceJpaEntity;
 import br.com.contractguard.infrastructure.persistence.repository.ServiceJpaRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class ServicePersistenceAdapter implements ServiceRepositoryPort {
@@ -44,6 +46,13 @@ public class ServicePersistenceAdapter implements ServiceRepositoryPort {
     @Override
     public boolean existsBySlug(String slug) {
         return repository.existsBySlug(slug);
+    }
+
+    @Override
+    public List<Service> findAll() {
+        return repository.findAll().stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
     }
 
     private Service mapToDomain(ServiceJpaEntity entity) {

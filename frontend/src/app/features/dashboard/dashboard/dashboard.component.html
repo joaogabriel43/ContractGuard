@@ -1,0 +1,44 @@
+<div class="max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-slate-100 tracking-tight">Dashboard</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded relative mb-6" role="alert">
+        <strong class="font-bold">Error: </strong>
+        <span class="block sm:inline">{{ error() }}</span>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (service of services(); track service.slug) {
+        <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700/50 hover:border-indigo-500/50 transition-all duration-300 p-6 group cursor-pointer"
+             [routerLink]="['/services', service.slug]">
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-semibold text-slate-100 group-hover:text-indigo-400 transition-colors">
+              {{ service.name }}
+            </h3>
+            <span class="text-xs font-medium px-2.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">
+              {{ service.slug }}
+            </span>
+          </div>
+          <p class="text-slate-400 text-sm">
+            Registered on: {{ service.createdAt | date:'mediumDate' }}
+          </p>
+        </div>
+      } @empty {
+        <div class="col-span-full text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700/50">
+          <svg class="mx-auto h-12 w-12 text-slate-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+          <p class="text-slate-400 text-lg font-medium">No services registered yet.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

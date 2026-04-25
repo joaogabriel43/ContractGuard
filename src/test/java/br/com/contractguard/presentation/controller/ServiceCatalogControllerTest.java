@@ -26,6 +26,9 @@ class ServiceCatalogControllerTest {
     @MockBean
     private RegisterServiceUseCase registerServiceUseCase;
 
+    @MockBean
+    private br.com.contractguard.domain.port.in.FindAllServicesUseCase findAllServicesUseCase;
+
     @Test
     @DisplayName("GIVEN valid request WHEN register service THEN returns 201 Created")
     void should_register_service_and_return_201() throws Exception {
@@ -85,4 +88,18 @@ class ServiceCatalogControllerTest {
                 .andExpect(jsonPath("$.title").value("Domain Rule Violation"))
                 .andExpect(jsonPath("$.detail").value("Service with slug 'pet-store' already exists"));
     }
+
+    @Test
+    @DisplayName("GIVEN existing services WHEN find all THEN returns 200 OK")
+    void should_return_all_services() throws Exception {
+        Service mockService = Service.create("Pet Store", "pet-store");
+        when(findAllServicesUseCase.execute()).thenReturn(java.util.List.of(mockService));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/services")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Pet Store"))
+                .andExpect(jsonPath("$[0].slug").value("pet-store"));
+    }
+
 }
