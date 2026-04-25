@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+
+  # ─────────────────────────────────────────────
+  # PostgreSQL 16 — Primary database
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: contractguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: contractguard
+      POSTGRES_USER: contractguard
+      POSTGRES_PASSWORD: contractguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - contractguard-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contractguard -d contractguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  contractguard-pgdata:
+    driver: local

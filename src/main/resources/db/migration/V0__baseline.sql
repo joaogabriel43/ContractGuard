@@ -1,0 +1,11 @@
+-- ContractGuard — Flyway Baseline
+-- V0__baseline.sql
+--
+-- This is an intentional baseline migration that marks the starting point
+-- of schema management for the ContractGuard database.
+-- Real schema migrations will follow as V1__*, V2__*, etc.
+--
+-- No DDL here: this file exists solely to establish the Flyway baseline
+-- without failing on a database that has no tables yet.
+
+-- (intentionally left blank — schema will be created in V1__)
