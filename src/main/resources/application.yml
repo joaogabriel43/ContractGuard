@@ -62,3 +62,10 @@ logging:
   level:
     root: INFO
     br.com.contractguard: DEBUG
+
+# ─────────────────────────────────────────────
+# CORS — override with CORS_ALLOWED_ORIGINS env-var in production
+# Multiple origins must be comma-separated: https://app.example.com,https://www.example.com
+# ─────────────────────────────────────────────
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
