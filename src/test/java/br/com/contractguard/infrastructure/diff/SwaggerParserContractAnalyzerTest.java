@@ -64,7 +64,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of());
         when(rule2.evaluate(any(), any())).thenReturn(List.of());
 
-        var report = analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        var report = analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         assertThat(report.getViolationCount()).isZero();
         assertThat(report.isCompatible()).isTrue();
@@ -82,7 +82,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of(v1));
         when(rule2.evaluate(any(), any())).thenReturn(List.of(v2));
 
-        var report = analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        var report = analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         assertThat(report.getViolationCount()).isEqualTo(2);
         assertThat(report.hasBreakingChanges()).isTrue();
@@ -95,7 +95,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of());
         when(rule2.evaluate(any(), any())).thenReturn(List.of());
 
-        analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         verify(rule1, times(1)).evaluate(any(OpenAPI.class), any(OpenAPI.class));
         verify(rule2, times(1)).evaluate(any(OpenAPI.class), any(OpenAPI.class));
@@ -107,7 +107,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of());
         when(rule2.evaluate(any(), any())).thenReturn(List.of());
 
-        var report = analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        var report = analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         assertThat(report.getServiceId()).isEqualTo(SERVICE_ID);
     }
@@ -118,7 +118,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of());
         when(rule2.evaluate(any(), any())).thenReturn(List.of());
 
-        var report = analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        var report = analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         assertThat(report.getBaseSpecVersion()).isEqualTo("1.0.0");
         assertThat(report.getCandidateSpecVersion()).isEqualTo("2.0.0");
@@ -127,7 +127,7 @@ class SwaggerParserContractAnalyzerTest {
     @Test
     @DisplayName("GIVEN invalid baseline spec WHEN analyze THEN throws SpecParsingException")
     void should_throw_spec_parsing_exception_when_baseline_is_invalid() {
-        assertThatThrownBy(() -> analyzer.analyze(SERVICE_ID, INVALID_SPEC, SPEC_V2))
+        assertThatThrownBy(() -> analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), INVALID_SPEC, SPEC_V2))
                 .isInstanceOf(SpecParsingException.class)
                 .hasMessageContaining("baseline");
     }
@@ -135,7 +135,7 @@ class SwaggerParserContractAnalyzerTest {
     @Test
     @DisplayName("GIVEN invalid candidate spec WHEN analyze THEN throws SpecParsingException")
     void should_throw_spec_parsing_exception_when_candidate_is_invalid() {
-        assertThatThrownBy(() -> analyzer.analyze(SERVICE_ID, SPEC_V1, INVALID_SPEC))
+        assertThatThrownBy(() -> analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, INVALID_SPEC))
                 .isInstanceOf(SpecParsingException.class)
                 .hasMessageContaining("candidate");
     }
@@ -146,7 +146,7 @@ class SwaggerParserContractAnalyzerTest {
         when(rule1.evaluate(any(), any())).thenReturn(List.of());
         when(rule2.evaluate(any(), any())).thenReturn(List.of());
 
-        var report = analyzer.analyze(SERVICE_ID, SPEC_V1, SPEC_V2);
+        var report = analyzer.analyze(SERVICE_ID, UUID.randomUUID(), UUID.randomUUID(), SPEC_V1, SPEC_V2);
 
         assertThatThrownBy(() -> report.getViolations().add(null))
                 .isInstanceOf(UnsupportedOperationException.class);

@@ -26,7 +26,7 @@ public class SwaggerParserContractAnalyzer implements ContractAnalyzerPort {
     }
 
     @Override
-    public DiffReport analyze(UUID serviceId, String baselineSpec, String candidateSpec) {
+    public DiffReport analyze(UUID serviceId, UUID baseApiSpecificationId, UUID candidateApiSpecificationId, String baselineSpec, String candidateSpec) {
         OpenAPI baselineOpenApi = parseSpec(baselineSpec, "baseline");
         OpenAPI candidateOpenApi = parseSpec(candidateSpec, "candidate");
 
@@ -38,7 +38,7 @@ public class SwaggerParserContractAnalyzer implements ContractAnalyzerPort {
         String baseVersion = extractVersion(baselineOpenApi);
         String candidateVersion = extractVersion(candidateOpenApi);
 
-        return DiffReport.create(serviceId, baseVersion, candidateVersion, allViolations);
+        return DiffReport.create(serviceId, baseApiSpecificationId, candidateApiSpecificationId, baseVersion, candidateVersion, allViolations);
     }
 
     private OpenAPI parseSpec(String specContent, String specName) {
