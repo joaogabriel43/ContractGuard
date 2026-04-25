@@ -1,0 +1,83 @@
+name: 'ContractGuard Check'
+description: 'Analyzes an OpenAPI specification for breaking changes using ContractGuard.'
+inputs:
+  api-url:
+    description: 'URL of the ContractGuard backend API'
+    required: true
+  service-slug:
+    description: 'Unique identifier (slug) of the service being checked'
+    required: true
+  spec-path:
+    description: 'Path to the OpenAPI specification file (YAML or JSON)'
+    required: true
+  version:
+    description: 'Version of the specification being submitted'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run ContractGuard Analysis
+      shell: bash
+      env:
+        API_URL: ${{ inputs.api-url }}
+        SERVICE_SLUG: ${{ inputs.service-slug }}
+        SPEC_PATH: ${{ inputs.spec-path }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        echo "::group::ContractGuard Analysis for $SERVICE_SLUG v$VERSION"
+        
+        if [ ! -f "$SPEC_PATH" ]; then
+          echo "::error::Specification file not found at $SPEC_PATH"
+          exit 1
+        fi
+        
+        echo "Reading specification file..."
+        # Read the file content safely
+        RAW_CONTENT=$(cat "$SPEC_PATH")
+        
+        # Build JSON payload securely using jq to handle formatting and escaping
+        PAYLOAD=$(jq -n \
+          --arg version "$VERSION" \
+          --arg rawContent "$RAW_CONTENT" \
+          '{version: $version, rawContent: $rawContent}')
+          
+        echo "Sending payload to ContractGuard ($API_URL/api/v1/services/$SERVICE_SLUG/analyze)..."
+        
+        # Execute request and capture HTTP status code along with the body
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/v1/services/$SERVICE_SLUG/analyze" \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD")
+        
+        # Extract body and status code
+        HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | sed '$d')
+        
+        if [ "$HTTP_STATUS" != "200" ]; then
+          echo "::error::ContractGuard API returned HTTP $HTTP_STATUS"
+          echo "Response body: $BODY"
+          exit 1
+        fi
+        
+        # Check for breaking changes
+        HAS_BREAKING_CHANGES=$(echo "$BODY" | jq -r '.hasBreakingChanges')
+        
+        if [ "$HAS_BREAKING_CHANGES" = "true" ]; then
+          echo "::error::Breaking changes detected!"
+          
+          # Iterate and print breaking violations
+          echo "$BODY" | jq -c '.violations[] | select(.severity == "BREAKING")' | while read i; do
+             RULE=$(echo "$i" | jq -r '.ruleType')
+             METHOD=$(echo "$i" | jq -r '.httpMethod')
+             PATH_URL=$(echo "$i" | jq -r '.path')
+             MSG=$(echo "$i" | jq -r '.message')
+             echo "::error title=Breaking Change ($RULE)::$METHOD $PATH_URL - $MSG"
+          done
+          
+          echo "::endgroup::"
+          exit 1
+        else
+          echo "Contract validation passed successfully. No breaking changes detected."
+          echo "::endgroup::"
+          exit 0
+        fi
