@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .dockerignore — ContractGuard
+#
+# IMPORTANT: paths prefixed with / are ANCHORED to the repository root.
+# This prevents accidentally excluding Clean Architecture inner directories
+# whose names happen to match (e.g. domain/port/out or domain/port/in).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Maven build output (anchored to root — NOT domain/port/out, infrastructure/out, etc.)
+/target
+
+# IDE / editor outputs (anchored to root)
+/out
+/.idea
+/.vscode
+*.iml
+*.iws
+*.ipr
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI / GitHub Actions (not needed inside the image)
+.github
+
+# Documentation (not needed inside the image)
+README.md
+CLAUDE.md
+LICENSE
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Frontend (built separately; backend image does not need it)
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+# Test reports
+**/surefire-reports
+**/failsafe-reports
