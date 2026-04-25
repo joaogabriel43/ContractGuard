@@ -1,0 +1,25 @@
+openapi: "3.0.3"
+info:
+  title: "Pet Store API"
+  version: "2.0.0"
+paths:
+  /pets:
+    post:
+      operationId: createPet
+      summary: Create a pet
+      responses:
+        "201":
+          description: Created
+  /pets/{petId}:
+    get:
+      operationId: getPet
+      summary: Get pet by ID
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A pet
