@@ -4,8 +4,10 @@ import br.com.contractguard.infrastructure.persistence.entity.DiffReportJpaEntit
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface DiffReportJpaRepository extends JpaRepository<DiffReportJpaEntity, UUID> {
+    Optional<DiffReportJpaEntity> findFirstByServiceIdOrderByCreatedAtDesc(UUID serviceId);
 }

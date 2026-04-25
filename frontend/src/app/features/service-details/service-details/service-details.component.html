@@ -1,1 +1,107 @@
-<p>service-details works!</p>
+<div class="max-w-7xl mx-auto">
+  <div class="mb-8">
+    <a routerLink="/" class="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 text-sm font-medium mb-4 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Back to Dashboard
+    </a>
+    <h1 class="text-3xl font-bold text-slate-100 tracking-tight">
+      Detalhes do Serviço: <span class="text-indigo-400">{{ slug() }}</span>
+    </h1>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
+        <svg class="mx-auto h-12 w-12 text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-lg font-medium">{{ error() }}</p>
+      </div>
+    }
+
+    @if (report(); as currentReport) {
+      <!-- Alerta de Integridade do Contrato -->
+      <div class="rounded-xl p-6 mb-8 flex items-center gap-4 border shadow-lg"
+           [class]="currentReport.hasBreakingChanges ? 'bg-red-500/10 border-red-500/50 text-red-200' : 'bg-green-500/10 border-green-500/50 text-green-200'">
+        
+        <div class="p-3 rounded-lg" [class]="currentReport.hasBreakingChanges ? 'bg-red-500/20' : 'bg-green-500/20'">
+          @if (currentReport.hasBreakingChanges) {
+            <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          } @else {
+            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        </div>
+
+        <div>
+          <h2 class="text-xl font-semibold">
+            @if (currentReport.hasBreakingChanges) {
+              Contrato Quebrado! (Breaking Changes Detectadas)
+            } @else {
+              Contrato Saudável! (100% Compatível)
+            }
+          </h2>
+          <p class="text-sm opacity-90 mt-1">
+            Versão Baseline: {{ currentReport.baseSpecVersion || 'N/A' }} &rarr; Candidata: {{ currentReport.candidateSpecVersion }}
+          </p>
+          <p class="text-xs opacity-75 mt-1">
+            Processado em: {{ currentReport.generatedAt | date:'medium' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Lista de Violações -->
+      @if (currentReport.violations.length > 0) {
+        <div class="bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+          <div class="px-6 py-4 bg-slate-700/30 border-b border-slate-700/50">
+            <h3 class="text-lg font-semibold text-slate-100">Violações Identificadas ({{ currentReport.violationCount }})</h3>
+          </div>
+          <div class="divide-y divide-slate-700/50">
+            @for (violation of currentReport.violations; track violation.path) {
+              <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-700/20 transition-colors">
+                <div class="flex items-start gap-3">
+                  <!-- Severidade Badge -->
+                  <span class="text-xs font-bold px-2.5 py-1 rounded tracking-wider border shrink-0"
+                        [class]="{
+                          'bg-red-500/20 text-red-300 border-red-500/30': violation.severity === 'BREAKING',
+                          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30': violation.severity === 'WARNING',
+                          'bg-blue-500/20 text-blue-300 border-blue-500/30': violation.severity === 'INFO'
+                        }">
+                    {{ violation.severity }}
+                  </span>
+
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <!-- Método HTTP -->
+                      <span class="text-xs font-mono font-bold px-1.5 py-0.5 rounded text-slate-200 bg-slate-700 border border-slate-600">
+                        {{ violation.httpMethod }}
+                      </span>
+                      <!-- Path -->
+                      <code class="text-indigo-300 font-mono text-sm bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">
+                        {{ violation.path }}
+                      </code>
+                    </div>
+                    <p class="text-slate-300 mt-2 text-sm leading-relaxed">{{ violation.message }}</p>
+                  </div>
+                </div>
+
+                <div class="text-xs font-medium text-slate-500 px-3 py-1 rounded bg-slate-900 border border-slate-800 shrink-0 self-start md:self-center">
+                  Regra: {{ violation.ruleType | titlecase }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

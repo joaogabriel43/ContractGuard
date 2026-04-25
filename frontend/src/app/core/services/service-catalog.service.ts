@@ -10,6 +10,25 @@ export interface Service {
   createdAt: string;
 }
 
+export interface ViolationResponse {
+  path: string;
+  httpMethod: string;
+  ruleType: string;
+  severity: string;
+  message: string;
+}
+
+export interface DiffReportResponse {
+  id: string;
+  serviceId: string;
+  baseSpecVersion: string | null;
+  candidateSpecVersion: string;
+  hasBreakingChanges: boolean;
+  violationCount: number;
+  violations: ViolationResponse[];
+  generatedAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,4 +41,9 @@ export class ServiceCatalogService {
   findAll(): Observable<Service[]> {
     return this.http.get<Service[]>(this.apiUrl);
   }
+
+  getLatestReport(slug: string): Observable<DiffReportResponse> {
+    return this.http.get<DiffReportResponse>(`${this.apiUrl}/${slug}/reports/latest`);
+  }
 }
+

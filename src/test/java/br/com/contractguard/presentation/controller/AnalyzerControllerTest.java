@@ -32,6 +32,34 @@ class AnalyzerControllerTest {
     @MockBean
     private AnalyzeContractUseCase analyzeContractUseCase;
 
+    @MockBean
+    private br.com.contractguard.domain.port.in.GetLatestReportUseCase getLatestReportUseCase;
+
+    @Test
+    @DisplayName("GIVEN existing report WHEN get latest report THEN returns 200 OK")
+    void should_return_latest_report() throws Exception {
+        var violation = Violation.of("/pets", "GET", ViolationType.ENDPOINT_REMOVED, ViolationSeverity.BREAKING, "Removed");
+        DiffReport mockReport = DiffReport.create(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "1.0.0", "2.0.0", List.of(violation));
+
+        when(getLatestReportUseCase.execute("pet-store")).thenReturn(java.util.Optional.of(mockReport));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/services/pet-store/reports/latest")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasBreakingChanges").value(true));
+    }
+
+    @Test
+    @DisplayName("GIVEN no report WHEN get latest report THEN returns 404 Not Found")
+    void should_return_404_when_no_report() throws Exception {
+        when(getLatestReportUseCase.execute("pet-store")).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/services/pet-store/reports/latest")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+
     @Test
     @DisplayName("GIVEN valid request WHEN analyze THEN returns 200 OK with DiffReport")
     void should_analyze_and_return_200() throws Exception {

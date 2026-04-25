@@ -50,6 +50,11 @@ public class DiffReportPersistenceAdapter implements DiffReportRepositoryPort {
         DiffReportJpaEntity saved = repository.save(entity);
         return mapToDomain(saved);
     }
+    @Override
+    public java.util.Optional<DiffReport> findLatestByServiceId(UUID serviceId) {
+        return repository.findFirstByServiceIdOrderByCreatedAtDesc(serviceId)
+                .map(this::mapToDomain);
+    }
 
     private DiffReport mapToDomain(DiffReportJpaEntity entity) {
         var violations = entity.getViolations().stream()
