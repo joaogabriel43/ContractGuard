@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://humorous-joy-production.up.railway.app'
+  apiUrl: 'https://humorous-joy-production.up.railway.app/api/v1'
 };
