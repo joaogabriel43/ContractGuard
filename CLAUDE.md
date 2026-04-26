@@ -325,3 +325,35 @@ dist
 e `domain/port/out`. Padrões `in` e `out` sem ancoragem excluiriam os
 Input/Output Ports inteiros do build, causando erros de compilação difíceis
 de diagnosticar (o código existe localmente, o erro só aparece no CI/CD).
+
+---
+
+### [2026-04-25] Erro: `out/` não-ancorado no `.gitignore` excluiu `domain/port/out` do repositório (causa raiz real)
+
+**O que aconteceu**: Os Output Ports da arquitetura hexagonal **nunca foram
+commitados**. O padrão `out/` sem `/` no `.gitignore` (seção IntelliJ IDEA)
+excluía recursivamente qualquer diretório `out/` na árvore, incluindo
+`domain/port/out/`. O build local funcionava porque os arquivos existiam no
+filesystem. O Railway falhava porque o repositório nunca os recebeu — o Maven
+não encontrava `ServiceRepositoryPort`, `ApiSpecificationRepositoryPort`, etc.
+Toda investigação de `.dockerignore`, BuildKit e flags Maven era ruído em cima
+de um problema mais simples.
+
+**Como detectar**: Ao suspeitar que arquivos estão faltando no remote, rodar:
+```bash
+git ls-files src/main/java/br/com/contractguard/domain/port/out/
+# saída vazia = arquivos nunca foram commitados
+```
+`git status` não mostra arquivos ignorados — `git ls-files` é o diagnóstico correto.
+
+**Como prevenir**: Ancorar **todos** os padrões de diretórios de IDE e build
+com `/` no `.gitignore`:
+```
+# ✅ Correto — exclui apenas o /out da raiz (saída do IntelliJ)
+/out
+
+# ❌ Errado — exclui domain/port/out/, infrastructure/out/, etc.
+out/
+```
+Após criar ou modificar `.gitignore`, verificar explicitamente que os arquivos
+de código-fonte aparecem em `git ls-files` antes do primeiro push.
