@@ -107,16 +107,16 @@
     <div class="bg-apple-red/10 border border-apple-red/30 text-apple-red px-5 py-4 rounded-2xl text-sm">
       {{ reportError() }}
     </div>
-  } @else if (report(); as r) {
+  } @else if (report()) {
 
     <!-- Status Banner -->
     <div class="rounded-2xl p-5 mb-4 flex items-center gap-4 border"
-         [class]="r.hasBreakingChanges
+         [class]="report()!.hasBreakingChanges
            ? 'bg-apple-red/10 border-apple-red/30'
            : 'bg-apple-green/10 border-apple-green/30'">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-           [class]="r.hasBreakingChanges ? 'bg-apple-red/20' : 'bg-apple-green/20'">
-        @if (r.hasBreakingChanges) {
+           [class]="report()!.hasBreakingChanges ? 'bg-apple-red/20' : 'bg-apple-green/20'">
+        @if (report()!.hasBreakingChanges) {
           <svg class="w-5 h-5 text-apple-red" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -129,30 +129,30 @@
       </div>
       <div class="min-w-0">
         <p class="font-semibold text-sm"
-           [class]="r.hasBreakingChanges ? 'text-apple-red' : 'text-apple-green'">
-          {{ r.hasBreakingChanges ? 'Breaking Changes Detected' : 'Contract Healthy' }}
+           [class]="report()!.hasBreakingChanges ? 'text-apple-red' : 'text-apple-green'">
+          {{ report()!.hasBreakingChanges ? 'Breaking Changes Detected' : 'Contract Healthy' }}
         </p>
         <p class="text-apple-muted text-xs mt-0.5">
-          {{ r.baseSpecVersion ?? 'N/A' }} → {{ r.candidateSpecVersion }}
-          · {{ r.generatedAt | date:'medium' }}
+          {{ report()!.baseSpecVersion ?? 'N/A' }} → {{ report()!.candidateSpecVersion }}
+          · {{ report()!.generatedAt | date:'medium' }}
         </p>
       </div>
       <span class="ml-auto text-xs font-semibold px-3 py-1 rounded-full shrink-0"
-            [class]="r.hasBreakingChanges
+            [class]="report()!.hasBreakingChanges
               ? 'bg-apple-red/20 text-apple-red'
               : 'bg-apple-green/20 text-apple-green'">
-        {{ r.violationCount }} {{ r.violationCount === 1 ? 'issue' : 'issues' }}
+        {{ report()!.violationCount }} {{ report()!.violationCount === 1 ? 'issue' : 'issues' }}
       </span>
     </div>
 
     <!-- Violations -->
-    @if (r.violations.length > 0) {
+    @if (report()!.violations.length > 0) {
       <div class="bg-apple-surface border border-apple-border rounded-2xl overflow-hidden">
         <div class="px-5 py-3.5 border-b border-apple-border">
           <p class="text-sm font-medium text-apple-text">Violations</p>
         </div>
         <div class="divide-y divide-apple-border">
-          @for (v of r.violations; track v.path + v.httpMethod) {
+          @for (v of report()!.violations; track v.path + v.httpMethod) {
             <div class="p-5 hover:bg-white/[.02] transition-colors">
               <div class="flex items-center gap-2 flex-wrap mb-2.5">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md border tracking-wider"
