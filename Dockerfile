@@ -9,14 +9,14 @@ WORKDIR /app
 # shared across all builds — avoiding the stale-layer problem where
 # dependency:go-offline was cached but annotation-processor JARs were missing.
 COPY pom.xml .
-RUN --mount=type=cache,target=/root/.m2 \
+RUN --mount=type=cache,id=maven-cache,target=/root/.m2 \
     mvn dependency:go-offline -B
 
 # Copy source and build.
 # -Dmaven.test.skip=true skips both test compilation and execution,
 # which is safer than -DskipTests (which still compiles tests).
 COPY src ./src
-RUN --mount=type=cache,target=/root/.m2 \
+RUN --mount=type=cache,id=maven-cache,target=/root/.m2 \
     mvn clean package -Dmaven.test.skip=true -B
 
 # Stage 2: Run the application
