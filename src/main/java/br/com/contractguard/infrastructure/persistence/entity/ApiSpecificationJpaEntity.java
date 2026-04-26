@@ -10,9 +10,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,8 +31,7 @@ public class ApiSpecificationJpaEntity {
     @Column(nullable = false)
     private String version;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "raw_content", nullable = false, columnDefinition = "jsonb")
+    @Column(name = "raw_content", nullable = false, columnDefinition = "text")
     private String rawContent;
 
     @Column(name = "created_at", nullable = false)

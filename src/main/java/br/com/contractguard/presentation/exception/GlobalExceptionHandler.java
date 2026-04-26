@@ -1,6 +1,7 @@
 package br.com.contractguard.presentation.exception;
 
 import br.com.contractguard.domain.exception.DomainException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -31,6 +32,16 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, errors);
         problemDetail.setTitle("Invalid Request Parameters");
         problemDetail.setType(URI.create("https://contractguard.com/errors/invalid-parameters"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ProblemDetail handleDataAccessException(DataAccessException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "A database error occurred while processing the request.");
+        problemDetail.setTitle("Data Processing Error");
+        problemDetail.setType(URI.create("https://contractguard.com/errors/data-processing-error"));
         return problemDetail;
     }
 }

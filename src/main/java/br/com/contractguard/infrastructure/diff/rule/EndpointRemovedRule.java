@@ -4,6 +4,7 @@ import br.com.contractguard.domain.model.analyzer.Violation;
 import br.com.contractguard.domain.model.analyzer.ViolationType;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * Detects if an endpoint (path + HTTP method) present in the baseline was removed in the candidate.
  */
+@Component
 public class EndpointRemovedRule implements DiffRule {
 
     @Override

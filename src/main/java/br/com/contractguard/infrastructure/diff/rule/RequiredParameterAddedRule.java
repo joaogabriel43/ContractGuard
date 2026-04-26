@@ -5,6 +5,7 @@ import br.com.contractguard.domain.model.analyzer.ViolationType;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * Detects if a new required parameter was added to an existing endpoint.
  */
+@Component
 public class RequiredParameterAddedRule implements DiffRule {
 
     @Override
