@@ -5,6 +5,17 @@
 
 ---
 
+## Status do Projeto
+
+**✅ DEPLOYED — Production ready** (2026-04-26)
+
+| Ambiente | URL |
+|---|---|
+| Backend (Railway) | https://humorous-joy-production.up.railway.app |
+| Frontend (Vercel) | https://contract-guard-cyan.vercel.app |
+
+---
+
 ## 1. Objetivo do Projeto
 
 **ContractGuard** é um serviço backend que detecta automaticamente **breaking changes em contratos OpenAPI (Swagger)**,
@@ -167,23 +178,25 @@ void should_classify_as_breaking_when_required_field_is_removed() { }
 
 ---
 
-### ADR-002: Armazenamento de Specs como JSONB no PostgreSQL
+### ADR-002: Armazenamento de Specs como TEXT no PostgreSQL
 
-- **Status**: Aceita
+- **Status**: Revisada (2026-04-26) — decisão original substituída
 - **Contexto**: Precisamos armazenar múltiplas versões de specs OpenAPI (que são documentos JSON/YAML de
   estrutura potencialmente variável). As opções consideradas foram: (1) armazenar como texto (`TEXT`), (2)
   armazenar como `JSONB` no PostgreSQL, (3) usar um object store externo (S3, MinIO).
-- **Decisão**: Armazenar o conteúdo da spec como **`JSONB`** em uma coluna do PostgreSQL.
-- **Justificativa**:
-  - **Simplicidade de infraestrutura**: elimina dependência de um object store externo, mantendo o stack
-    restrito a PostgreSQL — que já é obrigatório para os metadados.
-  - **Consultas nativas**: `JSONB` permite queries com operadores `->`, `->>`, `@>` diretamente, útil para
-    extrair paths específicos da spec para relatórios (ex: listar todos os endpoints de uma versão).
-  - **Indexação GIN**: suporte a índices GIN no PostgreSQL permite buscas eficientes dentro das specs.
-  - **Compactação automática**: PostgreSQL comprime internamente valores JSONB grandes (TOAST).
-  - Specs OpenAPI raramente ultrapassam 500 KB, dentro dos limites confortáveis do TOAST.
-- **Consequências**: Acoplamento ao PostgreSQL (sem suporte a MySQL/H2 sem adaptação). Aceito, pois o
-  PostgreSQL é a única base suportada por decisão de produto.
+- **Decisão original**: Armazenar como `JSONB`. **Decisão atual**: Armazenar como `TEXT`.
+- **Por que a decisão foi revisada**: A coluna `JSONB` exige que o conteúdo seja JSON válido. Specs OpenAPI
+  enviadas em formato YAML causavam `DataAccessException` na inserção, pois YAML não é JSON válido. A
+  conversão de YAML → JSON antes de persistir introduzia dependência de `swagger-core`'s `Json.mapper()`,
+  que registra `SwaggerAnnotationIntrospector` globalmente e causa `NoClassDefFoundError` por exigir JAXB
+  (removido no Java 11+). A solução mais simples e robusta foi mudar para `TEXT` (migration V3).
+- **Justificativa atual**:
+  - `TEXT` aceita JSON e YAML sem conversão — o Swagger Parser lida com ambos nativamente.
+  - Elimina a dependência de JAXB e a complexidade de conversão na camada de persistência.
+  - A vantagem de queries JSONB (operadores `->`, `->>`) não é necessária no modelo atual — o conteúdo
+    é sempre lido inteiro para parsing pelo `SwaggerParserContractAnalyzer`.
+- **Consequências**: Perda da indexação GIN e queries estruturais sobre o conteúdo da spec. Aceito para
+  o escopo atual; pode ser reintroduzido futuramente se houver necessidade de buscas dentro da spec.
 
 ---
 
@@ -357,3 +370,109 @@ out/
 ```
 Após criar ou modificar `.gitignore`, verificar explicitamente que os arquivos
 de código-fonte aparecem em `git ls-files` antes do primeiro push.
+
+---
+
+### [2026-04-26] Erro: `@Component` faltando nas implementações de `DiffRule`
+
+**O que aconteceu**: `EndpointRemovedRule` e `RequiredParameterAddedRule` não tinham `@Component`. Spring
+injetava uma `List<DiffRule>` vazia em `SwaggerParserContractAnalyzer`. O loop de regras nunca executava —
+o diff sempre retornava 0 violations, mesmo com breaking changes óbvias (endpoint removido, parâmetro
+obrigatório adicionado).
+
+**Por que era difícil detectar**: Testes unitários instanciavam as regras diretamente (`new EndpointRemovedRule()`),
+passando em todos os cenários. O bug só se manifestava com o contexto Spring completo (E2E / produção).
+
+**Como prevenir**: Toda classe que implementa uma interface injetada via `List<T>` **deve** ter `@Component`
+(ou outra stereotype annotation). Ao criar uma nova `DiffRule`, o checklist é:
+1. Implementar `DiffRule`.
+2. Anotar com `@Component`.
+3. Adicionar um teste de integração que valide o tamanho de `List<DiffRule>` injetada no contexto Spring.
+
+---
+
+### [2026-04-26] Erro: `LazyInitializationException` ao acessar `violations` fora da sessão JPA
+
+**O que aconteceu**: `GET /api/v1/services/{slug}/reports/latest` retornava 500 com
+`LazyInitializationException: failed to lazily initialize a collection of role: DiffReportJpaEntity.violations`.
+O use case `GetLatestReportUseCaseImpl` não era `@Transactional`; a sessão Hibernate fechava após o SELECT
+do relatório. Quando `mapToDomain()` tentava acessar `entity.getViolations()`, a entidade já estava detached.
+
+**Como prevenir**: Para coleções `@OneToMany` acessadas em um único ponto (query específica), usar
+`@EntityGraph` no método de repositório para forçar LEFT JOIN FETCH. Não alterar o `FetchType` global.
+
+```java
+// ✅ Correto — eager apenas nesta query
+@EntityGraph(attributePaths = {"violations"})
+Optional<DiffReportJpaEntity> findFirstByServiceIdOrderByCreatedAtDesc(UUID serviceId);
+
+// ❌ Errado — torna EAGER globalmente, causa N+1 em outras queries
+@OneToMany(fetch = FetchType.EAGER)
+```
+
+---
+
+### [2026-04-26] Erro: Coluna `raw_content JSONB` rejeitava specs em formato YAML
+
+**O que aconteceu**: `POST /api/v1/services/{slug}/specs` retornava 500 quando o corpo era YAML válido.
+PostgreSQL rejeitava a inserção porque `JSONB` exige JSON válido — YAML não é JSON. O Hibernate 6.4 com
+`@JdbcTypeCode(SqlTypes.JSON)` em `String` passa o conteúdo bruto ao JDBC sem conversão.
+
+**Como prevenir**: Usar `TEXT` para conteúdo arbitrário (JSON ou YAML). Usar `JSONB` apenas quando o
+conteúdo é garantidamente JSON e há necessidade de queries estruturais com `->` / `@>`. Se a conversão
+YAML → JSON for necessária, fazê-la **antes** de chegar à camada de persistência, sem depender de
+`io.swagger.v3.core.util.Json.mapper()` (que exige JAXB, removido no Java 11+).
+
+---
+
+### [2026-04-26] Erro: `DATABASE_URL` do Railway sem prefixo `jdbc:` quebrava a datasource
+
+**O que aconteceu**: O Railway injeta `DATABASE_URL` no formato `postgresql://user:pass@host/db`. O Spring
+Boot espera `jdbc:postgresql://user:pass@host/db`. Usar `DATABASE_URL` diretamente como
+`SPRING_DATASOURCE_URL` causava falha de conexão no startup.
+
+**Como prevenir**: Nunca usar `DATABASE_URL` diretamente como `SPRING_DATASOURCE_URL`. Sempre configurar
+a variável de ambiente manualmente no Railway com o prefixo `jdbc:`:
+
+```
+SPRING_DATASOURCE_URL=jdbc:postgresql://host:port/dbname
+SPRING_DATASOURCE_USERNAME=...
+SPRING_DATASOURCE_PASSWORD=...
+```
+
+Usar as variáveis individuais que o Railway expõe (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`)
+para montar a URL manualmente se necessário.
+
+---
+
+## 7. Configurações de Ambiente de Produção
+
+### Railway (Backend)
+
+| Variável | Valor esperado | Observação |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://host:port/dbname` | Nunca usar `DATABASE_URL` diretamente — falta o prefixo `jdbc:` |
+| `SPRING_DATASOURCE_USERNAME` | valor de `PGUSER` | |
+| `SPRING_DATASOURCE_PASSWORD` | valor de `PGPASSWORD` | |
+| `CORS_ALLOWED_ORIGINS` | `https://contract-guard-cyan.vercel.app` | Sem barra final — Spring rejeita URL com trailing slash |
+
+### Vercel (Frontend Angular)
+
+| Configuração | Valor |
+|---|---|
+| Root Directory | `frontend` |
+| Output Directory | `dist/frontend` |
+| Build Command | `ng build --configuration production` |
+
+O arquivo `vercel.json` na raiz do repositório deve conter rewrite de SPA para que rotas Angular
+funcionem em refresh direto:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+Sem esse rewrite, qualquer URL diferente de `/` retorna 404 no Vercel.
