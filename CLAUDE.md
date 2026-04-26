@@ -284,3 +284,44 @@ MAJOR.MINOR.PATCH[-SNAPSHOT]
 - `MINOR`: nova funcionalidade retrocompatível.
 - `PATCH`: bug fix.
 - Desenvolvimento ativo: sufixo `-SNAPSHOT`.
+
+---
+
+## 6. Erros Conhecidos e Como Evitá-los
+
+### [2026-04-25] Erro: `.dockerignore` sem ancoragem excluiu `domain/port/out` do build context
+
+**O que aconteceu**: Build Docker no Railway falhava com
+`package br.com.contractguard.domain.port.out does not exist` e
+`cannot find symbol: class ServiceRepositoryPort`. Os arquivos existiam
+localmente e o pacote estava correto, mas o build funciona localmente e
+falha apenas no container.
+
+**Por que**: Padrões sem prefixo `/` no `.dockerignore` (mesmo algoritmo do
+`.gitignore`) são **recursivos** — casam com qualquer diretório de mesmo nome
+em qualquer nível da árvore. O padrão `out` excluía silenciosamente
+`src/main/java/br/com/contractguard/domain/port/out/` do contexto de build
+enviado ao Docker daemon. Para o Maven dentro do container, os arquivos
+simplesmente não existiam.
+
+**Como prevenir**: Todo padrão de diretório de build/output no `.dockerignore`
+deve ser prefixado com `/` para ancorar à raiz do repositório:
+
+```
+# ✅ Correto — exclui apenas o diretório raiz
+/target
+/out
+/build
+/dist
+
+# ❌ Errado — exclui recursivamente qualquer dir com esse nome
+target
+out
+build
+dist
+```
+
+**Risco específico deste projeto**: A Arquitetura Hexagonal usa `domain/port/in`
+e `domain/port/out`. Padrões `in` e `out` sem ancoragem excluiriam os
+Input/Output Ports inteiros do build, causando erros de compilação difíceis
+de diagnosticar (o código existe localmente, o erro só aparece no CI/CD).
