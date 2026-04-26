@@ -1,8 +1,13 @@
-<nav class="bg-indigo-600 text-white shadow-md">
-  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <div class="font-bold text-xl tracking-tight">ContractGuard</div>
-    <div>
-      <a href="/" class="hover:text-indigo-200 transition-colors">Dashboard</a>
-    </div>
+<nav class="fixed top-0 left-0 right-0 z-50 bg-apple-surface/95 backdrop-blur-xl border-b border-apple-border">
+  <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+    <a routerLink="/" class="text-apple-text font-semibold text-base tracking-tight hover:opacity-80 transition-opacity">
+      ContractGuard
+    </a>
+    <a routerLink="/"
+       routerLinkActive="!text-apple-blue"
+       [routerLinkActiveOptions]="{ exact: true }"
+       class="text-sm text-apple-muted hover:text-apple-text transition-colors">
+      Dashboard
+    </a>
   </div>
 </nav>

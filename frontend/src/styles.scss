@@ -4,6 +4,24 @@
 
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-100 antialiased;
+    @apply bg-apple-bg text-apple-text antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a3c;
+    border-radius: 3px;
   }
 }

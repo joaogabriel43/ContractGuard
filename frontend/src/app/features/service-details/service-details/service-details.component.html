@@ -1,107 +1,189 @@
-<div class="max-w-7xl mx-auto">
-  <div class="mb-8">
-    <a routerLink="/" class="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 text-sm font-medium mb-4 transition-colors">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-      </svg>
-      Back to Dashboard
-    </a>
-    <h1 class="text-3xl font-bold text-slate-100 tracking-tight">
-      Detalhes do Serviço: <span class="text-indigo-400">{{ slug() }}</span>
-    </h1>
+<!-- Back + Header -->
+<div class="mb-10">
+  <a routerLink="/"
+     class="inline-flex items-center gap-2 text-apple-muted hover:text-apple-text text-sm mb-5 transition-colors group">
+    <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Dashboard
+  </a>
+  <div class="flex items-center gap-3 flex-wrap">
+    <h1 class="text-4xl font-bold text-apple-text tracking-tight">{{ slug() }}</h1>
+    <span class="text-xs text-apple-muted bg-apple-surface border border-apple-border px-3 py-1 rounded-full font-mono">
+      service
+    </span>
+  </div>
+</div>
+
+<!-- ── Upload Section ── -->
+<div class="bg-apple-surface border border-apple-border rounded-2xl p-6 mb-6">
+  <h2 class="text-base font-semibold text-apple-text mb-1">Analyze Contract</h2>
+  <p class="text-apple-muted text-sm mb-5">Upload an OpenAPI spec (YAML or JSON) to detect breaking changes.</p>
+
+  <!-- Dropzone -->
+  <div
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+    (click)="fileInput.click()"
+    class="border-2 border-dashed rounded-xl px-6 py-10 text-center cursor-pointer transition-all duration-200 mb-5"
+    [class]="isDragOver()
+      ? 'border-apple-blue bg-apple-blue/5'
+      : selectedFile()
+        ? 'border-apple-green/50 bg-apple-green/5'
+        : 'border-apple-border hover:border-apple-blue/50 hover:bg-white/[.02]'">
+    <input #fileInput type="file" accept=".yaml,.yml,.json" class="hidden" (change)="onFileSelected($event)"/>
+
+    @if (selectedFile()) {
+      <div class="flex flex-col items-center gap-2">
+        <svg class="w-8 h-8 text-apple-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-apple-text font-medium text-sm">{{ selectedFile()!.name }}</p>
+        <p class="text-apple-subtle text-xs">Click to replace</p>
+      </div>
+    } @else {
+      <div class="flex flex-col items-center gap-2">
+        <svg class="w-8 h-8 text-apple-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-apple-muted text-sm">
+          <span class="text-apple-blue font-medium">Drop file here</span> or click to browse
+        </p>
+        <p class="text-apple-subtle text-xs">.yaml · .yml · .json</p>
+      </div>
+    }
   </div>
 
-  @if (loading()) {
-    <div class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-    </div>
-  } @else {
-    @if (error()) {
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
-        <svg class="mx-auto h-12 w-12 text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p class="text-lg font-medium">{{ error() }}</p>
-      </div>
-    }
+  <!-- Version + Analyze -->
+  <div class="flex gap-3 flex-col sm:flex-row">
+    <input
+      type="text"
+      [value]="version()"
+      (input)="version.set($any($event.target).value)"
+      placeholder="Version (e.g. v1.2.0)"
+      class="flex-1 bg-black border border-apple-border rounded-xl px-4 py-2.5 text-apple-text text-sm
+             placeholder:text-apple-subtle focus:outline-none focus:border-apple-blue focus:ring-1
+             focus:ring-apple-blue transition-colors font-mono"
+    />
+    <button
+      (click)="analyze()"
+      [disabled]="!canAnalyze()"
+      class="bg-apple-blue hover:bg-apple-blue/90 disabled:opacity-40 disabled:cursor-not-allowed
+             text-white font-medium px-6 py-2.5 rounded-full text-sm transition-all duration-150
+             active:scale-95 shrink-0">
+      @if (analyzing()) {
+        <span class="flex items-center gap-2">
+          <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Analyzing…
+        </span>
+      } @else {
+        Analyze Contract
+      }
+    </button>
+  </div>
 
-    @if (report(); as currentReport) {
-      <!-- Alerta de Integridade do Contrato -->
-      <div class="rounded-xl p-6 mb-8 flex items-center gap-4 border shadow-lg"
-           [class]="currentReport.hasBreakingChanges ? 'bg-red-500/10 border-red-500/50 text-red-200' : 'bg-green-500/10 border-green-500/50 text-green-200'">
-        
-        <div class="p-3 rounded-lg" [class]="currentReport.hasBreakingChanges ? 'bg-red-500/20' : 'bg-green-500/20'">
-          @if (currentReport.hasBreakingChanges) {
-            <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          } @else {
-            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+  @if (analyzeError()) {
+    <div class="mt-4 bg-apple-red/10 border border-apple-red/30 text-apple-red px-4 py-3 rounded-xl text-sm">
+      {{ analyzeError() }}
+    </div>
+  }
+</div>
+
+<!-- ── Latest Report ── -->
+<div>
+  <h2 class="text-base font-semibold text-apple-text mb-4">Latest Report</h2>
+
+  @if (loadingReport()) {
+    <div class="bg-apple-surface border border-apple-border rounded-2xl p-8 animate-pulse">
+      <div class="h-5 bg-apple-surface2 rounded-lg w-1/2 mb-3"></div>
+      <div class="h-3.5 bg-apple-surface2 rounded-lg w-1/3"></div>
+    </div>
+  } @else if (reportError()) {
+    <div class="bg-apple-red/10 border border-apple-red/30 text-apple-red px-5 py-4 rounded-2xl text-sm">
+      {{ reportError() }}
+    </div>
+  } @else if (report(); as r) {
+
+    <!-- Status Banner -->
+    <div class="rounded-2xl p-5 mb-4 flex items-center gap-4 border"
+         [class]="r.hasBreakingChanges
+           ? 'bg-apple-red/10 border-apple-red/30'
+           : 'bg-apple-green/10 border-apple-green/30'">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+           [class]="r.hasBreakingChanges ? 'bg-apple-red/20' : 'bg-apple-green/20'">
+        @if (r.hasBreakingChanges) {
+          <svg class="w-5 h-5 text-apple-red" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        } @else {
+          <svg class="w-5 h-5 text-apple-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        }
+      </div>
+      <div class="min-w-0">
+        <p class="font-semibold text-sm"
+           [class]="r.hasBreakingChanges ? 'text-apple-red' : 'text-apple-green'">
+          {{ r.hasBreakingChanges ? 'Breaking Changes Detected' : 'Contract Healthy' }}
+        </p>
+        <p class="text-apple-muted text-xs mt-0.5">
+          {{ r.baseSpecVersion ?? 'N/A' }} → {{ r.candidateSpecVersion }}
+          · {{ r.generatedAt | date:'medium' }}
+        </p>
+      </div>
+      <span class="ml-auto text-xs font-semibold px-3 py-1 rounded-full shrink-0"
+            [class]="r.hasBreakingChanges
+              ? 'bg-apple-red/20 text-apple-red'
+              : 'bg-apple-green/20 text-apple-green'">
+        {{ r.violationCount }} {{ r.violationCount === 1 ? 'issue' : 'issues' }}
+      </span>
+    </div>
+
+    <!-- Violations -->
+    @if (r.violations.length > 0) {
+      <div class="bg-apple-surface border border-apple-border rounded-2xl overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-apple-border">
+          <p class="text-sm font-medium text-apple-text">Violations</p>
+        </div>
+        <div class="divide-y divide-apple-border">
+          @for (v of r.violations; track v.path + v.httpMethod) {
+            <div class="p-5 hover:bg-white/[.02] transition-colors">
+              <div class="flex items-center gap-2 flex-wrap mb-2.5">
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md border tracking-wider"
+                      [class]="getSeverityClasses(v.severity)">
+                  {{ v.severity }}
+                </span>
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/5 text-apple-muted border border-apple-border">
+                  {{ v.httpMethod }}
+                </span>
+                <code class="text-apple-blue font-mono text-sm bg-apple-blue/10 px-2 py-0.5 rounded-md border border-apple-blue/20">
+                  {{ v.path }}
+                </code>
+              </div>
+              <p class="text-apple-muted text-sm leading-relaxed">{{ v.message }}</p>
+            </div>
           }
         </div>
-
-        <div>
-          <h2 class="text-xl font-semibold">
-            @if (currentReport.hasBreakingChanges) {
-              Contrato Quebrado! (Breaking Changes Detectadas)
-            } @else {
-              Contrato Saudável! (100% Compatível)
-            }
-          </h2>
-          <p class="text-sm opacity-90 mt-1">
-            Versão Baseline: {{ currentReport.baseSpecVersion || 'N/A' }} &rarr; Candidata: {{ currentReport.candidateSpecVersion }}
-          </p>
-          <p class="text-xs opacity-75 mt-1">
-            Processado em: {{ currentReport.generatedAt | date:'medium' }}
-          </p>
-        </div>
       </div>
-
-      <!-- Lista de Violações -->
-      @if (currentReport.violations.length > 0) {
-        <div class="bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
-          <div class="px-6 py-4 bg-slate-700/30 border-b border-slate-700/50">
-            <h3 class="text-lg font-semibold text-slate-100">Violações Identificadas ({{ currentReport.violationCount }})</h3>
-          </div>
-          <div class="divide-y divide-slate-700/50">
-            @for (violation of currentReport.violations; track violation.path) {
-              <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-700/20 transition-colors">
-                <div class="flex items-start gap-3">
-                  <!-- Severidade Badge -->
-                  <span class="text-xs font-bold px-2.5 py-1 rounded tracking-wider border shrink-0"
-                        [class]="{
-                          'bg-red-500/20 text-red-300 border-red-500/30': violation.severity === 'BREAKING',
-                          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30': violation.severity === 'WARNING',
-                          'bg-blue-500/20 text-blue-300 border-blue-500/30': violation.severity === 'INFO'
-                        }">
-                    {{ violation.severity }}
-                  </span>
-
-                  <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <!-- Método HTTP -->
-                      <span class="text-xs font-mono font-bold px-1.5 py-0.5 rounded text-slate-200 bg-slate-700 border border-slate-600">
-                        {{ violation.httpMethod }}
-                      </span>
-                      <!-- Path -->
-                      <code class="text-indigo-300 font-mono text-sm bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">
-                        {{ violation.path }}
-                      </code>
-                    </div>
-                    <p class="text-slate-300 mt-2 text-sm leading-relaxed">{{ violation.message }}</p>
-                  </div>
-                </div>
-
-                <div class="text-xs font-medium text-slate-500 px-3 py-1 rounded bg-slate-900 border border-slate-800 shrink-0 self-start md:self-center">
-                  Regra: {{ violation.ruleType | titlecase }}
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
     }
+
+  } @else {
+    <!-- No report yet -->
+    <div class="bg-apple-surface border border-apple-border rounded-2xl p-10 text-center">
+      <div class="w-12 h-12 rounded-2xl bg-black border border-apple-border flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-apple-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <p class="text-apple-text font-medium text-sm">No reports yet</p>
+      <p class="text-apple-muted text-xs mt-1">Upload a spec above to run the first analysis.</p>
+    </div>
   }
 </div>

@@ -15,8 +15,9 @@ export class DashboardComponent implements OnInit {
   services = signal<Service[]>([]);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
+  readonly skeletonItems = [1, 2, 3, 4];
 
-  constructor(private readonly serviceCatalogService: ServiceCatalogService) { }
+  constructor(private readonly serviceCatalogService: ServiceCatalogService) {}
 
   ngOnInit(): void {
     this.loadServices();
@@ -24,13 +25,14 @@ export class DashboardComponent implements OnInit {
 
   loadServices(): void {
     this.loading.set(true);
+    this.error.set(null);
     this.serviceCatalogService.findAll().subscribe({
       next: (data) => {
         this.services.set(data);
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set('Failed to load services');
+        this.error.set('Failed to load services. Please try again.');
         this.loading.set(false);
         console.error(err);
       }

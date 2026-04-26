@@ -34,16 +34,26 @@ export interface DiffReportResponse {
 })
 export class ServiceCatalogService {
 
-  private readonly apiUrl = `${environment.apiUrl}/services`;
+  private readonly baseUrl = `${environment.apiUrl}/services`;
 
-  constructor(private readonly http: HttpClient) { }
+  constructor(private readonly http: HttpClient) {}
 
   findAll(): Observable<Service[]> {
-    return this.http.get<Service[]>(this.apiUrl);
+    return this.http.get<Service[]>(this.baseUrl);
+  }
+
+  registerService(name: string, slug: string): Observable<void> {
+    return this.http.post<void>(this.baseUrl, { name, slug });
+  }
+
+  analyzeContract(slug: string, version: string, rawContent: string): Observable<DiffReportResponse> {
+    return this.http.post<DiffReportResponse>(
+      `${this.baseUrl}/${slug}/analyze`,
+      { version, rawContent }
+    );
   }
 
   getLatestReport(slug: string): Observable<DiffReportResponse> {
-    return this.http.get<DiffReportResponse>(`${this.apiUrl}/${slug}/reports/latest`);
+    return this.http.get<DiffReportResponse>(`${this.baseUrl}/${slug}/reports/latest`);
   }
 }
-

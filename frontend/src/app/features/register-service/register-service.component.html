@@ -1,0 +1,83 @@
+<div class="min-h-[calc(100vh-96px)] flex items-center justify-center">
+  <div class="w-full max-w-md">
+
+    <!-- Back -->
+    <a routerLink="/"
+       class="inline-flex items-center gap-2 text-apple-muted hover:text-apple-text text-sm mb-8 transition-colors group">
+      <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <!-- Card -->
+    <div class="bg-apple-surface border border-apple-border rounded-3xl p-8">
+      <h1 class="text-2xl font-bold text-apple-text mb-1">New Service</h1>
+      <p class="text-apple-muted text-sm mb-8">Register an API to start monitoring its contracts.</p>
+
+      @if (error()) {
+        <div class="bg-apple-red/10 border border-apple-red/30 text-apple-red px-4 py-3 rounded-xl mb-6 text-sm">
+          {{ error() }}
+        </div>
+      }
+
+      <form (ngSubmit)="submit()" class="flex flex-col gap-5">
+
+        <!-- Name -->
+        <div>
+          <label class="block text-sm font-medium text-apple-text/80 mb-2">Service Name</label>
+          <input
+            type="text"
+            [value]="name()"
+            (input)="onNameInput($any($event.target).value)"
+            placeholder="Payment API"
+            autocomplete="off"
+            class="w-full bg-black border border-apple-border rounded-xl px-4 py-3 text-apple-text text-sm
+                   placeholder:text-apple-subtle focus:outline-none focus:border-apple-blue focus:ring-1
+                   focus:ring-apple-blue transition-colors"
+          />
+        </div>
+
+        <!-- Slug -->
+        <div>
+          <label class="block text-sm font-medium text-apple-text/80 mb-2">
+            Slug
+            <span class="text-apple-subtle font-normal ml-1">(auto-generated)</span>
+          </label>
+          <input
+            type="text"
+            [value]="slug()"
+            (input)="slug.set($any($event.target).value)"
+            placeholder="payment-api"
+            autocomplete="off"
+            class="w-full bg-black border border-apple-border rounded-xl px-4 py-3 text-apple-muted
+                   font-mono text-sm placeholder:text-apple-subtle focus:outline-none focus:border-apple-blue
+                   focus:ring-1 focus:ring-apple-blue transition-colors"
+          />
+          <p class="text-xs text-apple-subtle mt-1.5">Lowercase letters, numbers and hyphens only.</p>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="!isValid() || loading()"
+          class="mt-1 w-full bg-apple-blue hover:bg-apple-blue/90 disabled:opacity-40
+                 disabled:cursor-not-allowed text-white font-medium py-3 rounded-full
+                 transition-all duration-150 text-sm active:scale-[.98]">
+          @if (loading()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Creating…
+            </span>
+          } @else {
+            Create Service
+          }
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
