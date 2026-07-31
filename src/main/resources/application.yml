@@ -69,3 +69,11 @@ logging:
 # ─────────────────────────────────────────────
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
+# ─────────────────────────────────────────────
+# Security — API Key authentication
+# ─────────────────────────────────────────────
+contractguard:
+  security:
+    api-key: ${CONTRACTGUARD_API_KEY:cg_test_123456789}
+

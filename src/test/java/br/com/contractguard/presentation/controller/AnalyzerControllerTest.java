@@ -21,7 +21,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AnalyzerController.class)
+@WebMvcTest(
+    controllers = AnalyzerController.class,
+    excludeAutoConfiguration = {
+      org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+    })
 @DisplayName("AnalyzerController")
 class AnalyzerControllerTest {
 
