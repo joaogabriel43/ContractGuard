@@ -8,74 +8,79 @@ import br.com.contractguard.domain.port.out.DiffReportRepositoryPort;
 import br.com.contractguard.infrastructure.persistence.entity.DiffReportJpaEntity;
 import br.com.contractguard.infrastructure.persistence.entity.ViolationJpaEntity;
 import br.com.contractguard.infrastructure.persistence.repository.DiffReportJpaRepository;
-import org.springframework.stereotype.Component;
-
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DiffReportPersistenceAdapter implements DiffReportRepositoryPort {
 
-    private final DiffReportJpaRepository repository;
+  private final DiffReportJpaRepository repository;
 
-    public DiffReportPersistenceAdapter(DiffReportJpaRepository repository) {
-        this.repository = repository;
-    }
+  public DiffReportPersistenceAdapter(DiffReportJpaRepository repository) {
+    this.repository = repository;
+  }
 
-    @Override
-    public DiffReport save(DiffReport diffReport) {
-        DiffReportJpaEntity entity = DiffReportJpaEntity.builder()
-                .id(diffReport.getId())
-                .serviceId(diffReport.getServiceId())
-                .baseApiSpecificationId(diffReport.getBaseApiSpecificationId())
-                .candidateApiSpecificationId(diffReport.getCandidateApiSpecificationId())
-                .baseSpecVersion(diffReport.getBaseSpecVersion())
-                .candidateSpecVersion(diffReport.getCandidateSpecVersion())
-                .hasBreakingChanges(diffReport.hasBreakingChanges())
-                .createdAt(diffReport.getGeneratedAt())
-                .build();
+  @Override
+  public DiffReport save(DiffReport diffReport) {
+    DiffReportJpaEntity entity =
+        DiffReportJpaEntity.builder()
+            .id(diffReport.getId())
+            .serviceId(diffReport.getServiceId())
+            .baseApiSpecificationId(diffReport.getBaseApiSpecificationId())
+            .candidateApiSpecificationId(diffReport.getCandidateApiSpecificationId())
+            .baseSpecVersion(diffReport.getBaseSpecVersion())
+            .candidateSpecVersion(diffReport.getCandidateSpecVersion())
+            .hasBreakingChanges(diffReport.hasBreakingChanges())
+            .createdAt(diffReport.getGeneratedAt())
+            .build();
 
-        diffReport.getViolations().forEach(violation -> {
-            ViolationJpaEntity vEntity = ViolationJpaEntity.builder()
-                    .id(UUID.randomUUID())
-                    .ruleType(violation.type().name())
-                    .severity(violation.severity().name())
-                    .path(violation.path())
-                    .httpMethod(violation.httpMethod())
-                    .message(violation.message())
-                    .build();
-            entity.addViolation(vEntity);
-        });
+    diffReport
+        .getViolations()
+        .forEach(
+            violation -> {
+              ViolationJpaEntity vEntity =
+                  ViolationJpaEntity.builder()
+                      .id(UUID.randomUUID())
+                      .ruleType(violation.type().name())
+                      .severity(violation.severity().name())
+                      .path(violation.path())
+                      .httpMethod(violation.httpMethod())
+                      .message(violation.message())
+                      .build();
+              entity.addViolation(vEntity);
+            });
 
-        DiffReportJpaEntity saved = repository.save(entity);
-        return mapToDomain(saved);
-    }
-    @Override
-    public java.util.Optional<DiffReport> findLatestByServiceId(UUID serviceId) {
-        return repository.findFirstByServiceIdOrderByCreatedAtDesc(serviceId)
-                .map(this::mapToDomain);
-    }
+    DiffReportJpaEntity saved = repository.save(entity);
+    return mapToDomain(saved);
+  }
 
-    private DiffReport mapToDomain(DiffReportJpaEntity entity) {
-        var violations = entity.getViolations().stream()
-                .map(v -> Violation.of(
+  @Override
+  public java.util.Optional<DiffReport> findLatestByServiceId(UUID serviceId) {
+    return repository.findFirstByServiceIdOrderByCreatedAtDesc(serviceId).map(this::mapToDomain);
+  }
+
+  private DiffReport mapToDomain(DiffReportJpaEntity entity) {
+    var violations =
+        entity.getViolations().stream()
+            .map(
+                v ->
+                    Violation.of(
                         v.getPath(),
                         v.getHttpMethod(),
                         ViolationType.valueOf(v.getRuleType()),
                         ViolationSeverity.valueOf(v.getSeverity()),
-                        v.getMessage()
-                ))
-                .collect(Collectors.toList());
+                        v.getMessage()))
+            .collect(Collectors.toList());
 
-        return DiffReport.reconstitute(
-                entity.getId(),
-                entity.getServiceId(),
-                entity.getBaseApiSpecificationId(),
-                entity.getCandidateApiSpecificationId(),
-                entity.getBaseSpecVersion(),
-                entity.getCandidateSpecVersion(),
-                violations,
-                entity.getCreatedAt()
-        );
-    }
+    return DiffReport.reconstitute(
+        entity.getId(),
+        entity.getServiceId(),
+        entity.getBaseApiSpecificationId(),
+        entity.getCandidateApiSpecificationId(),
+        entity.getBaseSpecVersion(),
+        entity.getCandidateSpecVersion(),
+        violations,
+        entity.getCreatedAt());
+  }
 }

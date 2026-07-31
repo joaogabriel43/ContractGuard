@@ -6,27 +6,29 @@ import br.com.contractguard.domain.model.catalog.Service;
 import br.com.contractguard.domain.port.in.GetLatestReportUseCase;
 import br.com.contractguard.domain.port.out.DiffReportRepositoryPort;
 import br.com.contractguard.domain.port.out.ServiceRepositoryPort;
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GetLatestReportUseCaseImpl implements GetLatestReportUseCase {
 
-    private final ServiceRepositoryPort serviceRepositoryPort;
-    private final DiffReportRepositoryPort diffReportRepositoryPort;
+  private final ServiceRepositoryPort serviceRepositoryPort;
+  private final DiffReportRepositoryPort diffReportRepositoryPort;
 
-    public GetLatestReportUseCaseImpl(ServiceRepositoryPort serviceRepositoryPort,
-                                      DiffReportRepositoryPort diffReportRepositoryPort) {
-        this.serviceRepositoryPort = serviceRepositoryPort;
-        this.diffReportRepositoryPort = diffReportRepositoryPort;
-    }
+  public GetLatestReportUseCaseImpl(
+      ServiceRepositoryPort serviceRepositoryPort,
+      DiffReportRepositoryPort diffReportRepositoryPort) {
+    this.serviceRepositoryPort = serviceRepositoryPort;
+    this.diffReportRepositoryPort = diffReportRepositoryPort;
+  }
 
-    @Override
-    public Optional<DiffReport> execute(String slug) {
-        Service service = serviceRepositoryPort.findBySlug(slug)
-                .orElseThrow(() -> new DomainException("Service not found for slug: " + slug));
-        
-        return diffReportRepositoryPort.findLatestByServiceId(service.getId());
-    }
+  @Override
+  public Optional<DiffReport> execute(String slug) {
+    Service service =
+        serviceRepositoryPort
+            .findBySlug(slug)
+            .orElseThrow(() -> new DomainException("Service not found for slug: " + slug));
+
+    return diffReportRepositoryPort.findLatestByServiceId(service.getId());
+  }
 }

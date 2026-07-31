@@ -22,8 +22,8 @@ jobs:
         distribution: 'temurin'
         cache: maven
         
-    - name: Build and run tests
-      run: mvn clean test
+    - name: Check formatting and run tests (with coverage)
+      run: mvn clean verify spotless:check
 
   docker-validate:
     name: Docker Build Validation

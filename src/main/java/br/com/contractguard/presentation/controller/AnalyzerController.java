@@ -17,29 +17,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/services")
 public class AnalyzerController {
 
-    private final AnalyzeContractUseCase analyzeContractUseCase;
-    private final br.com.contractguard.domain.port.in.GetLatestReportUseCase getLatestReportUseCase;
+  private final AnalyzeContractUseCase analyzeContractUseCase;
+  private final br.com.contractguard.domain.port.in.GetLatestReportUseCase getLatestReportUseCase;
 
-    public AnalyzerController(AnalyzeContractUseCase analyzeContractUseCase,
-                              br.com.contractguard.domain.port.in.GetLatestReportUseCase getLatestReportUseCase) {
-        this.analyzeContractUseCase = analyzeContractUseCase;
-        this.getLatestReportUseCase = getLatestReportUseCase;
-    }
+  public AnalyzerController(
+      AnalyzeContractUseCase analyzeContractUseCase,
+      br.com.contractguard.domain.port.in.GetLatestReportUseCase getLatestReportUseCase) {
+    this.analyzeContractUseCase = analyzeContractUseCase;
+    this.getLatestReportUseCase = getLatestReportUseCase;
+  }
 
-    @PostMapping("/{slug}/analyze")
-    public ResponseEntity<DiffReportResponse> analyze(
-            @PathVariable String slug,
-            @Valid @RequestBody AnalyzeContractRequest request) {
+  @PostMapping("/{slug}/analyze")
+  public ResponseEntity<DiffReportResponse> analyze(
+      @PathVariable String slug, @Valid @RequestBody AnalyzeContractRequest request) {
 
-        DiffReport report = analyzeContractUseCase.analyze(slug, request.rawContent(), request.version());
-        return ResponseEntity.ok(DiffReportMapper.toResponse(report));
-    }
+    DiffReport report =
+        analyzeContractUseCase.analyze(slug, request.rawContent(), request.version());
+    return ResponseEntity.ok(DiffReportMapper.toResponse(report));
+  }
 
-    @org.springframework.web.bind.annotation.GetMapping("/{slug}/reports/latest")
-    public ResponseEntity<DiffReportResponse> getLatestReport(@PathVariable String slug) {
-        return getLatestReportUseCase.execute(slug)
-                .map(report -> ResponseEntity.ok(DiffReportMapper.toResponse(report)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
+  @org.springframework.web.bind.annotation.GetMapping("/{slug}/reports/latest")
+  public ResponseEntity<DiffReportResponse> getLatestReport(@PathVariable String slug) {
+    return getLatestReportUseCase
+        .execute(slug)
+        .map(report -> ResponseEntity.ok(DiffReportMapper.toResponse(report)))
+        .orElseGet(() -> ResponseEntity.notFound().build());
+  }
 }

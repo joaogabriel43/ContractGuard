@@ -6,14 +6,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "violations")
@@ -24,25 +23,24 @@ import java.util.UUID;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ViolationJpaEntity {
 
-    @Id
-    private UUID id;
+  @Id private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "diff_report_id", nullable = false)
-    private DiffReportJpaEntity report;
+  @ManyToOne
+  @JoinColumn(name = "diff_report_id", nullable = false)
+  private DiffReportJpaEntity report;
 
-    @Column(name = "rule_type", nullable = false)
-    private String ruleType;
+  @Column(name = "rule_type", nullable = false)
+  private String ruleType;
 
-    @Column(nullable = false)
-    private String severity;
+  @Column(nullable = false)
+  private String severity;
 
-    @Column(nullable = false)
-    private String path;
+  @Column(nullable = false)
+  private String path;
 
-    @Column(name = "http_method")
-    private String httpMethod;
+  @Column(name = "http_method")
+  private String httpMethod;
 
-    @Column(nullable = false)
-    private String message;
+  @Column(nullable = false)
+  private String message;
 }

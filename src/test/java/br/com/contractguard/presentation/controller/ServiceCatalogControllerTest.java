@@ -1,5 +1,10 @@
 package br.com.contractguard.presentation.controller;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import br.com.contractguard.domain.exception.DomainException;
 import br.com.contractguard.domain.model.catalog.Service;
 import br.com.contractguard.domain.port.in.RegisterServiceUseCase;
@@ -11,95 +16,95 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @WebMvcTest(ServiceCatalogController.class)
 @DisplayName("ServiceCatalogController")
 class ServiceCatalogControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockBean
-    private RegisterServiceUseCase registerServiceUseCase;
+  @MockBean private RegisterServiceUseCase registerServiceUseCase;
 
-    @MockBean
-    private br.com.contractguard.domain.port.in.FindAllServicesUseCase findAllServicesUseCase;
+  @MockBean
+  private br.com.contractguard.domain.port.in.FindAllServicesUseCase findAllServicesUseCase;
 
-    @Test
-    @DisplayName("GIVEN valid request WHEN register service THEN returns 201 Created")
-    void should_register_service_and_return_201() throws Exception {
-        Service mockService = Service.create("Pet Store", "pet-store");
-        when(registerServiceUseCase.register(anyString(), anyString())).thenReturn(mockService);
+  @Test
+  @DisplayName("GIVEN valid request WHEN register service THEN returns 201 Created")
+  void should_register_service_and_return_201() throws Exception {
+    Service mockService = Service.create("Pet Store", "pet-store");
+    when(registerServiceUseCase.register(anyString(), anyString())).thenReturn(mockService);
 
-        String jsonRequest = """
+    String jsonRequest =
+        """
                 {
                     "name": "Pet Store",
                     "slug": "pet-store"
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/services")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonRequest))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andExpect(header().string("Location", "/api/v1/services/pet-store"));
-    }
+    mockMvc
+        .perform(
+            post("/api/v1/services").contentType(MediaType.APPLICATION_JSON).content(jsonRequest))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("Location"))
+        .andExpect(header().string("Location", "/api/v1/services/pet-store"));
+  }
 
-    @Test
-    @DisplayName("GIVEN invalid slug format WHEN register service THEN returns 400 Bad Request")
-    void should_return_400_when_slug_is_invalid() throws Exception {
-        String jsonRequest = """
+  @Test
+  @DisplayName("GIVEN invalid slug format WHEN register service THEN returns 400 Bad Request")
+  void should_return_400_when_slug_is_invalid() throws Exception {
+    String jsonRequest =
+        """
                 {
                     "name": "Pet Store",
                     "slug": "INVALID SLUG!"
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/services")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonRequest))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Parameters"))
-                .andExpect(jsonPath("$.detail").value("Slug must contain only lowercase letters, numbers, and hyphens"));
-    }
+    mockMvc
+        .perform(
+            post("/api/v1/services").contentType(MediaType.APPLICATION_JSON).content(jsonRequest))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("Invalid Request Parameters"))
+        .andExpect(
+            jsonPath("$.detail")
+                .value("Slug must contain only lowercase letters, numbers, and hyphens"));
+  }
 
-    @Test
-    @DisplayName("GIVEN domain exception WHEN register service THEN returns 400 Bad Request")
-    void should_return_400_when_domain_exception_thrown() throws Exception {
-        when(registerServiceUseCase.register(anyString(), anyString()))
-                .thenThrow(new DomainException("Service with slug 'pet-store' already exists"));
+  @Test
+  @DisplayName("GIVEN domain exception WHEN register service THEN returns 400 Bad Request")
+  void should_return_400_when_domain_exception_thrown() throws Exception {
+    when(registerServiceUseCase.register(anyString(), anyString()))
+        .thenThrow(new DomainException("Service with slug 'pet-store' already exists"));
 
-        String jsonRequest = """
+    String jsonRequest =
+        """
                 {
                     "name": "Pet Store",
                     "slug": "pet-store"
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/services")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonRequest))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Domain Rule Violation"))
-                .andExpect(jsonPath("$.detail").value("Service with slug 'pet-store' already exists"));
-    }
+    mockMvc
+        .perform(
+            post("/api/v1/services").contentType(MediaType.APPLICATION_JSON).content(jsonRequest))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("Domain Rule Violation"))
+        .andExpect(jsonPath("$.detail").value("Service with slug 'pet-store' already exists"));
+  }
 
-    @Test
-    @DisplayName("GIVEN existing services WHEN find all THEN returns 200 OK")
-    void should_return_all_services() throws Exception {
-        Service mockService = Service.create("Pet Store", "pet-store");
-        when(findAllServicesUseCase.execute()).thenReturn(java.util.List.of(mockService));
+  @Test
+  @DisplayName("GIVEN existing services WHEN find all THEN returns 200 OK")
+  void should_return_all_services() throws Exception {
+    Service mockService = Service.create("Pet Store", "pet-store");
+    when(findAllServicesUseCase.execute()).thenReturn(java.util.List.of(mockService));
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/services")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Pet Store"))
-                .andExpect(jsonPath("$[0].slug").value("pet-store"));
-    }
-
+    mockMvc
+        .perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                    "/api/v1/services")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("Pet Store"))
+        .andExpect(jsonPath("$[0].slug").value("pet-store"));
+  }
 }

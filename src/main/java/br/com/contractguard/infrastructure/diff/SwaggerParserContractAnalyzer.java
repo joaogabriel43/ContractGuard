@@ -8,54 +8,66 @@ import br.com.contractguard.infrastructure.diff.rule.DiffRule;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SwaggerParserContractAnalyzer implements ContractAnalyzerPort {
 
-    private final List<DiffRule> rules;
-    private final OpenAPIV3Parser parser;
+  private final List<DiffRule> rules;
+  private final OpenAPIV3Parser parser;
 
-    public SwaggerParserContractAnalyzer(List<DiffRule> rules) {
-        this.rules = rules;
-        this.parser = new OpenAPIV3Parser();
+  public SwaggerParserContractAnalyzer(List<DiffRule> rules) {
+    this.rules = rules;
+    this.parser = new OpenAPIV3Parser();
+  }
+
+  @Override
+  public DiffReport analyze(
+      UUID serviceId,
+      UUID baseApiSpecificationId,
+      UUID candidateApiSpecificationId,
+      String baselineSpec,
+      String candidateSpec) {
+    OpenAPI baselineOpenApi = parseSpec(baselineSpec, "baseline");
+    OpenAPI candidateOpenApi = parseSpec(candidateSpec, "candidate");
+
+    List<Violation> allViolations = new ArrayList<>();
+    for (DiffRule rule : rules) {
+      allViolations.addAll(rule.evaluate(baselineOpenApi, candidateOpenApi));
     }
 
-    @Override
-    public DiffReport analyze(UUID serviceId, UUID baseApiSpecificationId, UUID candidateApiSpecificationId, String baselineSpec, String candidateSpec) {
-        OpenAPI baselineOpenApi = parseSpec(baselineSpec, "baseline");
-        OpenAPI candidateOpenApi = parseSpec(candidateSpec, "candidate");
+    String baseVersion = extractVersion(baselineOpenApi);
+    String candidateVersion = extractVersion(candidateOpenApi);
 
-        List<Violation> allViolations = new ArrayList<>();
-        for (DiffRule rule : rules) {
-            allViolations.addAll(rule.evaluate(baselineOpenApi, candidateOpenApi));
-        }
+    return DiffReport.create(
+        serviceId,
+        baseApiSpecificationId,
+        candidateApiSpecificationId,
+        baseVersion,
+        candidateVersion,
+        allViolations);
+  }
 
-        String baseVersion = extractVersion(baselineOpenApi);
-        String candidateVersion = extractVersion(candidateOpenApi);
+  private OpenAPI parseSpec(String specContent, String specName) {
+    SwaggerParseResult result = parser.readContents(specContent, null, null);
+    OpenAPI openAPI = result.getOpenAPI();
 
-        return DiffReport.create(serviceId, baseApiSpecificationId, candidateApiSpecificationId, baseVersion, candidateVersion, allViolations);
+    if (openAPI == null) {
+      throw new SpecParsingException(
+          String.format(
+              "Failed to parse %s specification. Errors: %s", specName, result.getMessages()));
     }
 
-    private OpenAPI parseSpec(String specContent, String specName) {
-        SwaggerParseResult result = parser.readContents(specContent, null, null);
-        OpenAPI openAPI = result.getOpenAPI();
+    return openAPI;
+  }
 
-        if (openAPI == null) {
-            throw new SpecParsingException(String.format("Failed to parse %s specification. Errors: %s", specName, result.getMessages()));
-        }
-
-        return openAPI;
+  private String extractVersion(OpenAPI openAPI) {
+    if (openAPI.getInfo() != null && openAPI.getInfo().getVersion() != null) {
+      return openAPI.getInfo().getVersion();
     }
-
-    private String extractVersion(OpenAPI openAPI) {
-        if (openAPI.getInfo() != null && openAPI.getInfo().getVersion() != null) {
-            return openAPI.getInfo().getVersion();
-        }
-        return "unknown";
-    }
+    return "unknown";
+  }
 }

@@ -9,19 +9,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class RegisterServiceUseCaseImpl implements RegisterServiceUseCase {
 
-    private final ServiceRepositoryPort serviceRepositoryPort;
+  private final ServiceRepositoryPort serviceRepositoryPort;
 
-    public RegisterServiceUseCaseImpl(ServiceRepositoryPort serviceRepositoryPort) {
-        this.serviceRepositoryPort = serviceRepositoryPort;
+  public RegisterServiceUseCaseImpl(ServiceRepositoryPort serviceRepositoryPort) {
+    this.serviceRepositoryPort = serviceRepositoryPort;
+  }
+
+  @Override
+  public Service register(String name, String slug) {
+    if (serviceRepositoryPort.existsBySlug(slug)) {
+      throw new DomainException(String.format("Service with slug '%s' already exists", slug));
     }
 
-    @Override
-    public Service register(String name, String slug) {
-        if (serviceRepositoryPort.existsBySlug(slug)) {
-            throw new DomainException(String.format("Service with slug '%s' already exists", slug));
-        }
-
-        Service service = Service.create(name, slug);
-        return serviceRepositoryPort.save(service);
-    }
+    Service service = Service.create(name, slug);
+    return serviceRepositoryPort.save(service);
+  }
 }
