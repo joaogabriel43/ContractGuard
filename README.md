@@ -8,6 +8,8 @@
 [![Angular 17](https://img.shields.io/badge/Angular-17-DD0031?style=flat-square&logo=angular&logoColor=white)](https://angular.dev/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Coverage > 80%](https://img.shields.io/badge/Coverage-%3E80%25-brightgreen.svg?style=flat-square)](#testing-strategy)
+[![Security: API Key](https://img.shields.io/badge/Security-API_Key-blueviolet?style=flat-square)](#security)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red?style=flat-square)](./LICENSE)
 
 ---
@@ -19,8 +21,10 @@
 - [Request Flow](#request-flow)
 - [Technology Stack](#technology-stack)
 - [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
+- [Senior Engineering Highlights](#senior-engineering-highlights)
 - [Project Structure](#project-structure)
 - [Running Locally](#running-locally)
+- [Observability](#observability)
 - [Environment Configuration](#environment-configuration)
 - [API Reference](#api-reference)
 - [Testing Strategy](#testing-strategy)
@@ -117,6 +121,18 @@ flowchart TD
     K -->|Yes| L[422 Unprocessable Entity\nCI fails]
     K -->|No| M[200 OK\nCI passes]
 ```
+
+---
+
+## Senior Engineering Highlights
+
+This project was built not just to "work", but to demonstrate enterprise-grade engineering practices:
+
+- **Clean Architecture & DDD**: Strict layer isolation. Domain logic is 100% framework-agnostic.
+- **Zero-Trust Security**: The API is protected by a custom `ApiKeyAuthFilter` via Spring Security. CI/CD runners must authenticate using `X-API-Key`.
+- **Day-2 Observability**: Integrated with Micrometer, exposing `/actuator/prometheus` metrics. A local monitoring stack (`docker-compose-observability.yml`) is provided with Prometheus and Grafana.
+- **Strict Code Quality**: The build pipeline enforces `Google Java Format` via Spotless and requires at least `80% Code Coverage` via JaCoCo. If the code is ugly or untested, the build fails.
+- **Real-Database Testing**: Testcontainers spins up a real PostgreSQL 16 instance for integration tests, completely eliminating the false positives associated with H2 in-memory databases.
 
 ---
 
@@ -265,15 +281,25 @@ npm run start
 
 The Angular dev server starts on `http://localhost:4200` with hot-reload enabled.
 
-### Step 4 — Explore the API
+### Step 4 — Run Observability Stack (Prometheus & Grafana)
 
-| Interface | URL |
-|---|---|
-| Swagger UI | http://localhost:8080/swagger-ui.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
-| Health Check | http://localhost:8080/actuator/health |
+```bash
+docker-compose -f docker-compose-observability.yml up -d
+```
+Grafana will be available at `http://localhost:3000` (admin/admin).
 
-### Step 5 — Run Tests
+### Step 5 — Explore the API
+
+| Interface | URL | Note |
+|---|---|---|
+| Swagger UI | http://localhost:8080/swagger-ui.html | Publicly accessible |
+| OpenAPI JSON | http://localhost:8080/v3/api-docs | Publicly accessible |
+| Health Check | http://localhost:8080/actuator/health | Publicly accessible |
+| Prometheus | http://localhost:8080/actuator/prometheus | Scraped by Prometheus |
+
+*Note: Any requests to `/api/v1/**` require the `X-API-Key: cg_test_123456789` header (when running locally).*
+
+### Step 6 — Run Tests
 
 ```bash
 # Unit tests (domain + application — no Docker needed)
